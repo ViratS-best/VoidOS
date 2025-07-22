@@ -5,7 +5,7 @@ import { desktopConfig } from "../config/desktopConfig";
 export function App() {
 	return (
 		<ProzillaOS
-			systemName="YourOS"
+			systemName="VoidOS"
 			tagLine="Powered by ProzillaOS"
 			config={{
 				apps: appsConfig,

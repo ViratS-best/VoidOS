@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <div align="center">
   <br />
   <p>
@@ -73,3 +74,7 @@ This is an overview of the most important files and folders in this project.
 [npm]: https://www.npmjs.com/package/prozilla-os
 [ko-fi]: https://ko-fi.com/prozilla
 [localhost]: http://localhost:3000/
+=======
+# VoidOS
+A Operating System with something horrifying!
+>>>>>>> f394afe8b77a5e1b0d1474985a3bdc7755491a49
