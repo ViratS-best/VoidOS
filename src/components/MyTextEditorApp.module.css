@@ -1,0 +1,67 @@
+/* src/components/MyTextEditorApp.module.css */
+.textEditorContainer {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #1c1c1c; /* Dark background */
+    color: #e0e0e0; /* Light text for readability */
+    font-family: 'monospace', 'Courier New', Courier, monospace;
+    font-size: 0.95em;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: hidden; /* Important for transforms */
+    /* REMOVED: transition property related to local shake */
+}
+
+.textArea {
+    flex-grow: 1; /* Make it fill the container */
+    width: 100%;
+    background-color: transparent; /* Transparent background */
+    border: none; /* No border */
+    outline: none; /* No focus outline */
+    resize: none; /* Disable manual resizing by user */
+    color: inherit; /* Inherit text color from container */
+    font-family: inherit; /* Inherit font from container */
+    font-size: inherit; /* Inherit font size from container */
+    padding: 0;
+    margin: 0;
+    line-height: 1.4;
+    overflow-y: auto; /* Enable vertical scrolling */
+    white-space: pre-wrap; /* Preserve whitespace and wrap text */
+    caret-color: #00ff00; /* Green cursor */
+}
+
+/* Styles for the AI prompt area (keep these as they are not related to the shake) */
+.aiPromptArea {
+    display: flex;
+    align-items: center;
+    padding-top: 5px;
+    border-top: 1px solid #333; /* Separator line */
+    margin-top: 5px;
+}
+
+.aiPromptPrefix {
+    color: #ff4444; /* Red for AI prompt prefix */
+    margin-right: 5px;
+    font-weight: bold;
+}
+
+.aiPromptInput {
+    flex-grow: 1;
+    background-color: #282828; /* Slightly lighter dark background for input */
+    border: 1px solid #444;
+    color: #00ff00; /* Green text for AI input */
+    padding: 5px;
+    font-family: inherit;
+    font-size: inherit;
+    outline: none;
+    caret-color: #00ff00;
+}
+
+.aiPromptInput::placeholder {
+    color: #777;
+}
+
+/* REMOVED: .goodbyeEffectActive class and @keyframes goodbyeShake */
+/* These styles are now in App.module.css for the OS-wide effect */

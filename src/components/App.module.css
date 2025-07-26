@@ -1,0 +1,76 @@
+/* src/components/App.module.css */
+.appContainer {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden; /* Crucial for transform effects to prevent scrollbars */
+    /* Add transitions for smooth start/stop of shake */
+    transition: transform 0.1s ease-out, filter 0.1s ease-out;
+}
+
+.osShakeActive {
+    /* Apply a slight initial transform to the entire OS for an unsettling feel */
+    transform: scale(0.99) rotate(0.2deg);
+    filter: brightness(0.95); /* Subtle dimming for intensity */
+    /* Rapid, continuous shake for the whole OS */
+    animation: osShake 0.075s infinite alternate; /* Faster, more intense shake */
+}
+
+@keyframes osShake {
+    0% {
+        transform: translate(2px, 2px) rotate(0.3deg);
+    }
+    25% {
+        transform: translate(-2px, -2px) rotate(-0.3deg);
+    }
+    50% {
+        transform: translate(3px, -1px) rotate(0.4deg);
+    }
+    75% {
+        transform: translate(-1px, 3px) rotate(-0.4deg);
+    }
+    100% {
+        transform: translate(2px, 2px) rotate(0.3deg);
+}
+}
+
+/* Styles for the fade-to-white overlay */
+.whiteFadeOverlay {
+    position: fixed; /* Fixed position to cover the entire viewport */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: white; /* The color it will fade to */
+    opacity: 0; /* Starts completely transparent */
+    pointer-events: none; /* Ensures the overlay doesn't block mouse/touch events */
+    z-index: 9999; /* Places it above all other OS elements but below the jumpscare */
+    /* Animate opacity from 0 to 1 over 10 seconds, then stay at 1 */
+    animation: fadeInWhite 10s forwards;
+}
+
+@keyframes fadeInWhite {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Styles for the jumpscare GIF container */
+.jumpscareOverlay {
+    position: fixed; /* Fixed position to cover the entire viewport */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex; /* Use flexbox to center the image */
+    justify-content: center;
+    align-items: center;
+    background-color: black; /* Black background to make jumpscare more impactful */
+    z-index: 10000; /* Place above the white fade overlay */
+    overflow: hidden; /* Ensure image doesn't overflow its container */
+}
+
+.jumpscareImage {
+    width: 100%;      /* Make the image take full width of the overlay */
+    height: 100%;     /* Make the image take full height of the overlay */
+    object-fit: contain; /* Scales the GIF to fit within its container, maintaining aspect ratio */
+    display: block;     /* Removes any extra space below the image if it's an inline element */
+}

@@ -1,0 +1,62 @@
+/* src/components/WarningScreen.module.css */
+.terminalContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
+    width: 100vw;  /* Full viewport width */
+    background-color: #0d0d0d; /* Very dark background */
+    color: #00ff00; /* Classic green terminal text */
+    font-family: 'monospace', 'Courier New', Courier, monospace;
+    font-size: 1.1em;
+    padding: 20px; /* More padding for a full-screen feel */
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent content from spilling */
+}
+
+.terminalOutput {
+    flex-grow: 1;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    padding-right: 10px;
+    scrollbar-width: thin; /* For Firefox */
+    scrollbar-color: #008800 #0d0d0d; /* For Firefox */
+}
+
+/* Custom scrollbar for Webkit browsers (Chrome, Safari, Edge) */
+.terminalOutput::-webkit-scrollbar {
+    width: 8px;
+}
+
+.terminalOutput::-webkit-scrollbar-track {
+    background: #0d0d0d;
+}
+
+.terminalOutput::-webkit-scrollbar-thumb {
+    background-color: #008800;
+    border-radius: 4px;
+    border: 2px solid #0d0d0d;
+}
+
+.terminalInputLine {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.terminalPrompt {
+    color: #00ff00;
+    margin-right: 5px;
+    user-select: none; /* Prevent text selection */
+}
+
+.terminalInput {
+    flex-grow: 1;
+    background-color: transparent;
+    border: none;
+    color: inherit; /* Inherit text color from container */
+    font-family: inherit;
+    font-size: inherit;
+    outline: none; /* Remove focus outline */
+    caret-color: #00ff00; /* Normal green cursor */
+    /* No erratic cursor animation for this simple terminal */
+}

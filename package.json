@@ -1,5 +1,5 @@
 {
-	"name": "prozilla-os-boilerplate",
+	"name": "void-os",
 	"private": true,
 	"author": {
 		"name": "Virat Sisodiya",
@@ -16,7 +16,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/prozilla-os/ProzillaOS-boilerplate.git"
+		"url": ""
 	},
 	"dependencies": {
 		"prozilla-os": "^1.3.6",

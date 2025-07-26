@@ -1,4 +1,7 @@
-import { AppsConfig, browser, calculator, fileExplorer, settings, terminal, textEditor } from "prozilla-os";
+import { AppsConfig, browser, calculator, fileExplorer, settings, /* Remove textEditor */ } from "prozilla-os";
+// IMPORT YOUR NEW TERMINAL AND TEXT EDITOR APPS
+import { myTerminalApp } from "../main";
+import { myTextEditorApp } from "../apps/myTextEditorApp"; // NEW IMPORT
 
 // Set the default homepage for the browser app using windowOptions
 browser.windowOptions = {
@@ -9,9 +12,10 @@ browser.windowOptions = {
 export const appsConfig = new AppsConfig({
     apps: [
         fileExplorer.setName("File Explorer")
-            .setDescription("Application for browsing files."),
-        terminal.setName("Terminal"),
-        textEditor.setName("Text Editor"),
+            .setDescription("Application for Browse files."),
+        myTerminalApp, // Your custom terminal
+        // REMOVE THE OLD TEXT EDITOR APP: textEditor.setName("Text Editor"),
+        myTextEditorApp, // YOUR CUSTOM TEXT EDITOR APP HERE
         browser
             .setName("Web Browser")
             .setDescription("Browse the web with this browser app."),
