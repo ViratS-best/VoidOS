@@ -1,50 +1,81 @@
 /* src/components/App.module.css */
+
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
 .appContainer {
     height: 100vh;
     width: 100vw;
-    overflow: hidden; /* Crucial for transform effects to prevent scrollbars */
-    /* Add transitions for smooth start/stop of shake */
+    overflow: hidden;
     transition: transform 0.1s ease-out, filter 0.1s ease-out;
 }
 
 .osShakeActive {
-    /* Apply a slight initial transform to the entire OS for an unsettling feel */
-    transform: scale(0.99) rotate(0.2deg);
-    filter: brightness(0.95); /* Subtle dimming for intensity */
-    /* Rapid, continuous shake for the whole OS */
-    animation: osShake 0.075s infinite alternate; /* Faster, more intense shake */
+    animation: osShake 0.035s infinite alternate, /* Even faster shake */
+               osSlant 1.8s infinite steps(4) alternate, /* Slightly faster choppy slant */
+               osBlurFlicker 0.07s infinite alternate, /* Faster blur flicker */
+               osColorShift 2.5s infinite alternate, /* Faster, more frequent color shifts */
+               osFilterDistort 0.4s infinite alternate; /* Faster filter distortion */
+
+    transform: scale(0.96) rotate(1.5deg); /* More initial distortion */
+    filter: brightness(0.6) contrast(1.8) saturate(0.3) hue-rotate(10deg) invert(0.02); /* More aggressive base filter */
 }
 
 @keyframes osShake {
     0% {
-        transform: translate(2px, 2px) rotate(0.3deg);
+        transform: translate(15px, 15px) rotate(3.5deg); /* Max displacement and rotation */
     }
     25% {
-        transform: translate(-2px, -2px) rotate(-0.3deg);
+        transform: translate(-15px, -15px) rotate(-3.5deg);
     }
     50% {
-        transform: translate(3px, -1px) rotate(0.4deg);
+        transform: translate(18px, -10px) rotate(4deg);
     }
     75% {
-        transform: translate(-1px, 3px) rotate(-0.4deg);
+        transform: translate(-10px, 18px) rotate(-4deg);
     }
     100% {
-        transform: translate(2px, 2px) rotate(0.3deg);
-}
+        transform: translate(15px, 15px) rotate(3.5deg);
+    }
 }
 
-/* Styles for the fade-to-white overlay */
+@keyframes osBlurFlicker {
+    0% { filter: blur(0px) brightness(0.9); }
+    50% { filter: blur(2px) brightness(0.75); } /* More blur, darker flicker */
+    100% { filter: blur(0px) brightness(0.9); }
+}
+
+@keyframes osColorShift {
+    0% { filter: hue-rotate(0deg) saturate(1) contrast(1); }
+    50% { filter: hue-rotate(45deg) saturate(0.1) contrast(2); } /* More extreme shift, high contrast, almost black and white */
+    100% { filter: hue-rotate(0deg) saturate(1) contrast(1); }
+}
+
+@keyframes osFilterDistort {
+    0% { filter: invert(0) sepia(0); }
+    25% { filter: invert(0.1) sepia(0.5); } /* More inversion/sepia */
+    75% { filter: invert(0.1) sepia(0.5); }
+    100% { filter: invert(0) sepia(0); }
+}
+
+@keyframes osSlant {
+    0% { transform: rotateZ(0deg); }
+    20% { transform: rotateZ(2deg); } /* Slightly larger slant angle */
+    40% { transform: rotateZ(-2deg); }
+    60% { transform: rotateZ(2deg); }
+    80% { transform: rotateZ(-2deg); }
+    100% { transform: rotateZ(0deg); }
+}
+
 .whiteFadeOverlay {
-    position: fixed; /* Fixed position to cover the entire viewport */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: white; /* The color it will fade to */
-    opacity: 0; /* Starts completely transparent */
-    pointer-events: none; /* Ensures the overlay doesn't block mouse/touch events */
-    z-index: 9999; /* Places it above all other OS elements but below the jumpscare */
-    /* Animate opacity from 0 to 1 over 10 seconds, then stay at 1 */
+    background-color: white;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
     animation: fadeInWhite 10s forwards;
 }
 
@@ -53,24 +84,171 @@
     to { opacity: 1; }
 }
 
-/* Styles for the jumpscare GIF container */
-.jumpscareOverlay {
-    position: fixed; /* Fixed position to cover the entire viewport */
+.vignetteOverlay {
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    display: flex; /* Use flexbox to center the image */
+    pointer-events: none;
+    z-index: 9500;
+    background: radial-gradient(ellipse at center,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0) 40%, /* Start darkening even earlier */
+        rgba(0,0,0,0.7) 70%, /* Darker fade */
+        rgba(0,0,0,0.9) 100% /* Nearly black edges */
+    );
+    opacity: 0;
+    animation: vignetteAppear 2.5s forwards, vignettePulse 0.8s infinite alternate 0.5s; /* Faster appearance, faster pulse */
+}
+
+@keyframes vignetteAppear {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes vignettePulse {
+    from { background-color: rgba(0,0,0,0.7); }
+    to { background-color: rgba(0,0,0,0.9); }
+}
+
+.glitchOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9900;
+    background: url('https://upload.wikimedia.org/wikipedia/commons/0/02/Television_static.gif') repeat;
+    background-size: cover;
+    opacity: 0.2; /* More visible base opacity */
+    animation: glitchFlicker 0.04s infinite alternate; /* Even faster flicker */
+    mix-blend-mode: overlay;
+}
+
+@keyframes glitchFlicker {
+    0% { filter: hue-rotate(0deg); opacity: 0.2; }
+    50% { filter: hue-rotate(120deg); opacity: 0.25; } /* More extreme color shift, more visible */
+    100% { filter: hue-rotate(0deg); opacity: 0.2; }
+}
+
+.flashOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9998;
+    opacity: 1;
+    pointer-events: none;
+}
+
+.flashBlack {
+    background-color: black;
+}
+
+.flashWhite {
+    background-color: white;
+}
+
+/* NEW: Ghostly Overlay Styles */
+.ghostlyOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9600; /* Between vignette and glitch */
+    background-image: url('/images/ghostly_face.png'); /* CUSTOM IMAGE NEEDED */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.05; /* Very subtle base opacity */
+    animation: ghostlyFlicker 0.1s infinite alternate, ghostlyScalePulse 5s infinite ease-in-out;
+    filter: grayscale(1) blur(1px) contrast(2); /* More eerie look */
+    mix-blend-mode: overlay; /* Blends with screen */
+}
+
+@keyframes ghostlyFlicker {
+    0% { opacity: 0.05; transform: scale(1); }
+    50% { opacity: 0.1; transform: scale(1.02); } /* Subtle visibility and size change */
+    100% { opacity: 0.05; transform: scale(1); }
+}
+
+@keyframes ghostlyScalePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* NEW: Distorted Cursor */
+body.distortedCursor {
+    cursor: none !important; /* Make cursor disappear entirely */
+}
+
+
+.jumpscareOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
     justify-content: center;
     align-items: center;
-    background-color: black; /* Black background to make jumpscare more impactful */
-    z-index: 10000; /* Place above the white fade overlay */
-    overflow: hidden; /* Ensure image doesn't overflow its container */
+    background-color: black;
+    z-index: 10000;
+    overflow: hidden;
 }
 
 .jumpscareImage {
-    width: 100%;      /* Make the image take full width of the overlay */
-    height: 100%;     /* Make the image take full height of the overlay */
-    object-fit: contain; /* Scales the GIF to fit within its container, maintaining aspect ratio */
-    display: block;     /* Removes any extra space below the image if it's an inline element */
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.goodbyeScrollTextOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 9000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.goodbyeScrollText {
+    white-space: nowrap;
+    font-size: 15vw;
+    font-weight: bold;
+    color: rgba(0, 255, 0, 0.4);
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.6), 0 0 20px rgba(0, 255, 0, 0.4);
+    font-family: 'VT323', monospace;
+    animation: diagonalGoodbyeScroll 10s linear infinite;
+    transform: translate(-100vw, -100vh) scale(0.8) skewX(-10deg);
+}
+
+@keyframes diagonalGoodbyeScroll {
+    0% {
+        transform: translate(-100vw, -100vh);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.5;
+    }
+    80% {
+        transform: translate(100vw, 100vh);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translate(100vw, 100vh);
+        opacity: 0;
+    }
 }

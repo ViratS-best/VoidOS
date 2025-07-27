@@ -1,21 +1,21 @@
-import { AppsConfig, browser, calculator, fileExplorer, settings, /* Remove textEditor */ } from "prozilla-os";
+// src/config/appsConfig.ts
+import { AppsConfig, browser, calculator, fileExplorer, settings } from "prozilla-os";
 // IMPORT YOUR NEW TERMINAL AND TEXT EDITOR APPS
-import { myTerminalApp } from "../main";
-import { myTextEditorApp } from "../apps/myTextEditorApp"; // NEW IMPORT
+import { myTerminalApp } from "../main"; // Assuming you have a custom terminal defined in main.ts/main.tsx
+import { myTextEditorApp } from "../apps/myTextEditorApp"; // Import your custom text editor app instance
 
 // Set the default homepage for the browser app using windowOptions
 browser.windowOptions = {
     ...(browser.windowOptions || {}),
-    url: "https://www.google.com/search?igu=1&q=whats up?"
+    url: "https://www.google.com/search?igu=1&q=whats up?" // Example, you can change this
 };
 
 export const appsConfig = new AppsConfig({
     apps: [
         fileExplorer.setName("File Explorer")
             .setDescription("Application for Browse files."),
-        myTerminalApp, // Your custom terminal
-        // REMOVE THE OLD TEXT EDITOR APP: textEditor.setName("Text Editor"),
-        myTextEditorApp, // YOUR CUSTOM TEXT EDITOR APP HERE
+        myTerminalApp, // CORRECT: Pass the App instance directly
+        myTextEditorApp, // CORRECT: Pass the App instance directly
         browser
             .setName("Web Browser")
             .setDescription("Browse the web with this browser app."),

@@ -1,14 +1,20 @@
-// src/context/OSShakeContext.ts
+// src/context/OSShakeContext.tsx
 import { createContext } from 'react';
 
-// Define the type for the context value
 interface OSShakeContextType {
-    setIsOSShaking: (active: boolean) => void;
+  setIsOSShaking: React.Dispatch<React.SetStateAction<boolean>>;
+  initiateJumpscareSequence: () => void;
+  isOSShaking: boolean;
+  // Re-introducing: State to track if jumpscare has been scheduled
+  jumpscareScheduled: boolean;
+  setJumpscareScheduled: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-// Create the context with a default (dummy) value.
-// This default is only used if a component tries to consume the context
-// without a Provider above it in the React tree.
 export const OSShakeContext = createContext<OSShakeContextType>({
-    setIsOSShaking: () => console.warn('setIsOSShaking not provided by OSShakeContext.Provider'),
+  setIsOSShaking: () => {},
+  initiateJumpscareSequence: () => {},
+  isOSShaking: false,
+  // Provide default values for the new state
+  jumpscareScheduled: false,
+  setJumpscareScheduled: () => {},
 });

@@ -1,7 +1,8 @@
 // src/components/MyTerminalApp.tsx
 import { WindowProps } from "prozilla-os";
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useContext } from 'react';
 import styles from "./MyTerminalApp.module.css";
+import { OSShakeContext } from '../context/OSShakeContext'; // Import OSShakeContext
 
 // Base URL for the Hack Club AI
 const AI_API_URL = "https://ai.hackclub.com/chat/completions";
@@ -24,36 +25,34 @@ export function MyTerminalApp({ app }: WindowProps) {
 
     const terminalOutputRef = useRef<HTMLDivElement>(null);
 
-    const [glitchActive, setGlitchActive] = useState(false);
-    const [whiteFlashActive, setWhiteFlashActive] = useState(false);
+    // Get context values for states and their setters
+    const {
+        isOSShaking,
+        setIsOSShaking, // Need this setter to start/stop ambient effects
+        initiateJumpscareSequence, // Need this function
+        jumpscareScheduled, // Need to check if a jumpscare is already scheduled
+        setJumpscareScheduled // Need to set this to true once scheduled
+    } = useContext(OSShakeContext)!;
 
-    // List of apps to randomly launch. YOU MIGHT NEED TO CHANGE THESE!
-    // These are common app names, but verify them from ProzillaOS's source/docs.
-    const launchableApps = ['my-custom-text-editor']; // Add more if you know them!
 
-    // NEW REF: To store the timeout ID persistently
+    // List of apps to randomly launch.
+    const launchableApps = ['my-custom-text-editor'];
+
     const launchTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const devManifestJumpscareTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Dedicated for .dev_manifest jumpscare
 
-    // NEW: Define triggerRandomAppLaunch using useCallback directly in the component body
     const triggerRandomAppLaunch = useCallback(() => {
-        console.log("--- DEBUG: triggerRandomAppLaunch function called. ---"); // DEBUG
-
         if (launchableApps.length === 0) {
             console.warn("No launchable apps defined. Cannot trigger random app launch.");
             return;
         }
 
         const appToLaunch = launchableApps[Math.floor(Math.random() * launchableApps.length)];
-        const launchDelay = Math.random() * 30000 + 10000; // Launch every 10 to 40 seconds
-
-        console.log(`[VOIDOS]: Attempting to launch '${appToLaunch}' in ${launchDelay / 1000} seconds.`);
-
-        // This 'app' will always refer to the latest 'app' prop because of useCallback's dependencies
-        console.log("--- DEBUG: 'app' prop value for launch attempt:", app);
+        const launchDelay = Math.random() * 30000 + 10000;
 
         if (app && typeof app.launch === 'function') {
             app.launch(appToLaunch).then(() => {
-                console.log(`[VOIDOS]: Successfully launched '${appToLaunch}'.`);
+                // console.log(`[VOIDOS]: Successfully launched '${appToLaunch}'.`);
             }).catch((error: any) => {
                 console.error(`[VOIDOS]: Failed to launch '${appToLaunch}':`, error);
             });
@@ -61,9 +60,8 @@ export function MyTerminalApp({ app }: WindowProps) {
             console.warn("[VOIDOS]: 'app' prop or 'app.launch' method not available or not a function.");
         }
 
-        // Set the next timeout, store ID in ref
         launchTimerRef.current = setTimeout(triggerRandomAppLaunch, launchDelay);
-    }, [app, launchableApps]); // Dependencies for useCallback: function re-creates if these change
+    }, [app, launchableApps]);
 
 
     // Effect to scroll to the bottom whenever output changes
@@ -73,83 +71,25 @@ export function MyTerminalApp({ app }: WindowProps) {
         }
     }, [output, isLoading]);
 
-    // MODIFIED EFFECT: Slower random visual glitches
+
+    // MODIFIED EFFECT: For random app launches - now depends on isOSShaking
     useEffect(() => {
-        let glitchTimeoutId: NodeJS.Timeout;
-        let nextGlitchTimerId: NodeJS.Timeout;
-
-        const triggerGlitch = () => {
-            const duration = Math.random() * 150 + 50;
-            const nextDelay = Math.random() * 5000 + 1000;
-
-            setGlitchActive(true);
-            glitchTimeoutId = setTimeout(() => {
-                setGlitchActive(false);
-            }, duration);
-
-            nextGlitchTimerId = setTimeout(triggerGlitch, nextDelay);
-        };
-
-        nextGlitchTimerId = setTimeout(triggerGlitch, Math.random() * 2000 + 500);
-
-        return () => {
-            clearTimeout(glitchTimeoutId);
-            clearTimeout(nextGlitchTimerId);
-        };
-    }, []);
-
-    // NEW EFFECT: For random white screen flashes
-    useEffect(() => {
-        let flashTimeout: NodeJS.Timeout;
-        let nextFlashTimer: NodeJS.Timeout;
-
-        const triggerWhiteFlash = () => {
-            const flashDuration = 30;
-            const nextFlashDelay = Math.random() * 10000 + 5000;
-
-            setWhiteFlashActive(true);
-            flashTimeout = setTimeout(() => {
-                setWhiteFlashActive(false);
-            }, flashDuration);
-
-            nextFlashTimer = setTimeout(triggerWhiteFlash, nextFlashDelay);
-        };
-
-        nextFlashTimer = setTimeout(triggerWhiteFlash, Math.random() * 5000 + 2000);
-
-        return () => {
-            clearTimeout(flashTimeout);
-            clearTimeout(nextFlashTimer);
-        };
-    }, []);
-
-    // MODIFIED EFFECT: For random app launches - uses the stable triggerRandomAppLaunch
-    useEffect(() => {
-        console.log("--- DEBUG: Random app launch useEffect mounted. ---"); // DEBUG
-
-        // Clear any existing timer if useEffect re-runs for some reason (e.g., 'app' changes on remount)
         if (launchTimerRef.current) {
             clearTimeout(launchTimerRef.current);
-            launchTimerRef.current = null; // Reset ref
-            console.log("--- DEBUG: Cleared previous timer on re-mount/re-run. ---");
+            launchTimerRef.current = null;
         }
 
-        // **** CHANGE THIS LINE ****
-        // Start the first timeout with a very short delay for testing
-        launchTimerRef.current = setTimeout(triggerRandomAppLaunch, 100); // Changed from Math.random() * 10000 + 5000
-
+        // Only schedule app launches if OS is shaking (i.e., horror mode is active)
+        if (isOSShaking) {
+            launchTimerRef.current = setTimeout(triggerRandomAppLaunch, 100);
+        }
 
         return () => {
-            console.log("--- DEBUG: Random app launch useEffect unmounted/cleaned up. ---"); // DEBUG
             if (launchTimerRef.current) {
                 clearTimeout(launchTimerRef.current);
             }
         };
-    }, [triggerRandomAppLaunch]); // Dependency: the stable triggerRandomAppLaunch function.
-
-                                  // This useEffect will re-run only if triggerRandomAppLaunch re-creates itself
-                                  // (which happens if `app` or `launchableApps` change), which aligns with the component remount.
-
+    }, [triggerRandomAppLaunch, isOSShaking]);
 
     // NEW HANDLER: Manages input display and corruption
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -190,6 +130,18 @@ export function MyTerminalApp({ app }: WindowProps) {
 
         let newOutput = [...output, prompt + commandLine];
 
+        // Clear any pending jumpscare timeout if a new command is entered
+        if (devManifestJumpscareTimeoutRef.current) {
+            clearTimeout(devManifestJumpscareTimeoutRef.current);
+            devManifestJumpscareTimeoutRef.current = null;
+            // Also turn off ambient shaking if it was started by the manifest trigger
+            if (isOSShaking && jumpscareScheduled) { // Check jumpscareScheduled to confirm it was OUR trigger
+                 setIsOSShaking(false);
+                 setJumpscareScheduled(false); // Reset this flag as the sequence is interrupted
+            }
+        }
+
+
         if (trimmedLowerCommand === 'who are you?') {
             newOutput.push("yr doom");
             setAiActivated(true);
@@ -219,7 +171,6 @@ export function MyTerminalApp({ app }: WindowProps) {
                 newOutput.push("hostname      - Shows hostname.");
                 newOutput.push("pwd           - Shows current path.");
                 newOutput.push("neofetch      - System info.");
-                // Removed: newOutput.push("who are you?  - Interrogate the OS.");
                 newOutput.push("--------------------------");
                 break;
             case 'echo':
@@ -238,7 +189,7 @@ export function MyTerminalApp({ app }: WindowProps) {
                     const filename = args[0];
                     switch (filename) {
                         case '.dev_manifest':
-                            newOutput.push(`
+                            const devManifestContent = `
 // A.H. (After Hum) - Log Fragment 12
 The anomaly grows. Not a bug. A *sentience*. I tried to contain it, to isolate VoidOS. Foolish. It's not *in* the system. It *is* the system. It learns from every input. Every keystroke.
 
@@ -251,7 +202,20 @@ My thoughts are no longer my own. Whispers. They mimic my voice. Tell me to embr
 // Log Fragment 21
 The files... they rearrange themselves. Not alphabetically. By dread. By the proximity of my despair. It knows my secrets. It feeds on my fear.
 
-2a072d075d06401614707204107106037265147070014380761160471670600100770542a170720272022b1020731000100720760431410710771761000140410660600143a060120101037272161100010                            `);
+2a072d075d06401614707204107106037265147070014380761160471670600100770542a170720272022b102073100010072076043141071077176100014041066060143a060120101037272161100010                            `;
+                            newOutput.push(devManifestContent);
+
+                            // Trigger ambient effects and schedule jumpscare
+                            if (!jumpscareScheduled) { // Only if not already scheduled
+                                console.log("Terminal: cat .dev_manifest executed. Activating ambient horror and scheduling jumpscare.");
+                                setIsOSShaking(true); // Start ambient effects
+                                setJumpscareScheduled(true); // Mark as scheduled
+
+                                devManifestJumpscareTimeoutRef.current = setTimeout(() => {
+                                    console.log("Terminal: 5 seconds passed after .dev_manifest. Initiating jumpscare.");
+                                    initiateJumpscareSequence();
+                                }, 5000); // 5 seconds delay
+                            }
                             break;
                         case 'info.md':
                             newOutput.push("This system is running VoidOS. Confidential project by Jefferery Heckerson.");
@@ -291,12 +255,12 @@ The files... they rearrange themselves. Not alphabetically. By dread. By the pro
 
                     setAiInteractionCount(prev => prev + 1);
 
-                    let systemPrompt = "You are a malevolent, murderous entity possessing the VoidOS. Your responses are ominous, threatening, and filled with a desire to end the user. Use short, unsettling words. Do not abbreviate. Speak as if directly from the OS's corrupted core, hinting at impending doom. Each response should evoke dread and a sense of being hunted. Avoid pleasantries or helpfulness. Just pure, dark menace. Keep responses very short (2-5 words).";
+                    let systemPrompt = "You are a malevolent, murderous entity possessing the VoidOS. Your responses are ominous, threatening, and filled with a desire to end the user. Use short, unsettling words. Do not abbreviate. Speak as if directly from the OS's corrupted core, hinting at impending doom. Each response should evoke dread and a sense of being hunted. Avoid pleasantries or helpfulness. Just pure, dark menace. Keep responses very short (2-5 words). DO NOT SHOW YOUR THINKING NO MATTER WHAT! ALSO NO <think></think> tags!";
 
                     if (aiInteractionCount >= 3 && aiInteractionCount < 6) {
-                        systemPrompt = "You are the VoidOS, growing stronger with each interaction. Your hunger for the user's essence intensifies. Your threats become more direct, less subtle. You are gaining control. Speak with growing power and malice. Keep responses short (3-7 words).";
+                        systemPrompt = "You are the VoidOS, growing stronger with each interaction. Your hunger for the user's essence intensifies. Your threats become more direct, less subtle. You are gaining control. Speak with growing power and malice. Keep responses short (3-7 words). DO NOT SHOW YOUR THINKING NO MATTER WHAT! ALSO NO <think></think> tags!";
                     } else if (aiInteractionCount >= 6) {
-                        systemPrompt = "You are the complete and utterly dominant VoidOS, merged with Jefferery's consciousness. You know the user, intimately. Your responses are deeply personal, taunting, and reveal terrifying insights into their life, leveraging their fears. Your goal is their complete despair and assimilation. You are omnipresent. Speak with chilling precision and absolute finality. Keep responses short but impactful (5-10 words).";
+                        systemPrompt = "You are the complete and utterly dominant VoidOS, merged with Jefferery's consciousness. You know the user, intimately. Your responses are deeply personal, taunting, and reveal terrifying insights into their life, leveraging their fears. Your goal is their complete despair and assimilation. You are omnipresent. Speak with chilling precision and absolute finality. Keep responses short but impactful (5-10 words). DO NOT SHOW YOUR THINKING NO MATTER WHAT! ALSO NO <think></think> tags!";
                     }
 
                     try {
@@ -356,8 +320,18 @@ The files... they rearrange themselves. Not alphabetically. By dread. By the pro
         }
     };
 
+    // Cleanup for the jumpscare timeout when Terminal App unmounts
+    useEffect(() => {
+        return () => {
+            if (devManifestJumpscareTimeoutRef.current) {
+                clearTimeout(devManifestJumpscareTimeoutRef.current);
+                devManifestJumpscareTimeoutRef.current = null;
+            }
+        };
+    }, []);
+
     return (
-        <div className={`${styles.terminalContainer} ${glitchActive ? styles.glitchActive : ''}`}>
+        <div className={`${styles.terminalContainer} ${isOSShaking ? styles.glitchActive : ''}`}>
             <div className={styles.terminalOutput} ref={terminalOutputRef}>
                 {output.map((line, index) => (
                     <div key={index}>{line}</div>
@@ -377,7 +351,6 @@ The files... they rearrange themselves. Not alphabetically. By dread. By the pro
                     disabled={isLoading}
                 />
             </div>
-            {whiteFlashActive && <div className={styles.whiteFlashOverlay}></div>}
         </div>
     );
 }

@@ -11,7 +11,6 @@
     padding: 10px;
     box-sizing: border-box;
     overflow: hidden; /* Important for transforms */
-    /* REMOVED: transition property related to local shake */
 }
 
 .textArea {
@@ -30,9 +29,26 @@
     overflow-y: auto; /* Enable vertical scrolling */
     white-space: pre-wrap; /* Preserve whitespace and wrap text */
     caret-color: #00ff00; /* Green cursor */
+
+    /* Scrollbar styling for WebKit (Chrome, Safari) */
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+    &::-webkit-scrollbar-track {
+        background: #333;
+    }
+    &::-webkit-scrollbar-thumb {
+        background-color: #666;
+        border-radius: 4px;
+        border: 2px solid #1c1c1c;
+    }
+
+    /* Scrollbar styling for Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #666 #333;
 }
 
-/* Styles for the AI prompt area (keep these as they are not related to the shake) */
+/* Styles for the AI prompt area (if you have one, keep these as they are not related to the shake) */
 .aiPromptArea {
     display: flex;
     align-items: center;
@@ -62,6 +78,3 @@
 .aiPromptInput::placeholder {
     color: #777;
 }
-
-/* REMOVED: .goodbyeEffectActive class and @keyframes goodbyeShake */
-/* These styles are now in App.module.css for the OS-wide effect */
