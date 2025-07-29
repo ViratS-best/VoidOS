@@ -8,7 +8,7 @@
 		"allowUmdGlobalAccess": true,
 		"resolveJsonModule": true,
 		"allowJs": true,
-		"checkJs": true,
+		"checkJs": false,
 		"noEmit": true,
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,

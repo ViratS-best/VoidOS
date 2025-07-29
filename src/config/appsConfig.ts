@@ -3,6 +3,7 @@ import { AppsConfig, browser, calculator, fileExplorer, settings } from "prozill
 // IMPORT YOUR NEW TERMINAL AND TEXT EDITOR APPS
 import { myTerminalApp } from "../main"; // Assuming you have a custom terminal defined in main.ts/main.tsx
 import { myTextEditorApp } from "../apps/myTextEditorApp"; // Import your custom text editor app instance
+import { myLockedNotesApp } from "../apps/lockedNotesApp"; // Import the new locked notes app instance
 
 // Set the default homepage for the browser app using windowOptions
 browser.windowOptions = {
@@ -14,8 +15,9 @@ export const appsConfig = new AppsConfig({
     apps: [
         fileExplorer.setName("File Explorer")
             .setDescription("Application for Browse files."),
-        myTerminalApp, // CORRECT: Pass the App instance directly
-        myTextEditorApp, // CORRECT: Pass the App instance directly
+        myTerminalApp, // Pass the App instance directly
+        myTextEditorApp, // Pass the App instance directly
+        myLockedNotesApp, // Pass the new Locked Notes App instance directly
         browser
             .setName("Web Browser")
             .setDescription("Browse the web with this browser app."),

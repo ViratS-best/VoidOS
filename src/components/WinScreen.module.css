@@ -1,0 +1,70 @@
+/* src/components/WinScreen.module.css */
+
+.winScreenOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.95); /* Semi-transparent dark background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999; /* On top of everything */
+    animation: fadeIn 1s forwards;
+    color: #00ff00; /* Green text for a matrix/terminal feel */
+    font-family: 'VT323', monospace; /* Or a similar monospace font */
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+    flex-direction: column;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.winScreenContent {
+    text-align: center;
+    padding: 20px;
+    border: 2px solid #00ff00;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.8);
+    max-width: 80%;
+}
+
+.title {
+    font-size: 3em;
+    margin-bottom: 20px;
+    color: #00ff00;
+    animation: textFlicker 1.5s infinite alternate; /* Optional flicker */
+}
+
+.message {
+    font-size: 1.5em;
+    line-height: 1.4;
+    margin-bottom: 30px;
+    color: #00cc00;
+}
+
+.resetButton {
+    background-color: #007700;
+    color: #fff;
+    border: 1px solid #00ff00;
+    padding: 10px 20px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+    font-family: 'VT323', monospace;
+}
+
+.resetButton:hover {
+    background-color: #00ff00;
+    color: #000;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.9);
+}
+
+@keyframes textFlicker {
+    0% { opacity: 1; text-shadow: 0 0 5px rgba(0, 255, 0, 0.7); }
+    50% { opacity: 0.9; text-shadow: 0 0 10px rgba(0, 255, 0, 0.9), 0 0 15px rgba(0, 255, 0, 0.5); }
+    100% { opacity: 1; text-shadow: 0 0 5px rgba(0, 255, 0, 0.7); }
+}

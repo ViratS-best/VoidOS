@@ -66,6 +66,7 @@
     100% { transform: rotateZ(0deg); }
 }
 
+/* --- THE CRUCIAL CHANGE IS HERE --- */
 .whiteFadeOverlay {
     position: fixed;
     top: 0;
@@ -73,16 +74,19 @@
     width: 100vw;
     height: 100vh;
     background-color: white;
-    opacity: 0;
+    opacity: 1; /* Make it instantly opaque */
     pointer-events: none;
     z-index: 9999;
-    animation: fadeInWhite 10s forwards;
+    /* REMOVE THE ANIMATION: animation: fadeInWhite 10s forwards; */
 }
 
-@keyframes fadeInWhite {
+/* We don't need @keyframes fadeInWhite anymore, as it's instantly opaque */
+/* @keyframes fadeInWhite {
     from { opacity: 0; }
     to { opacity: 1; }
-}
+} */
+/* ---------------------------------- */
+
 
 .vignetteOverlay {
     position: fixed;

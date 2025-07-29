@@ -1,0 +1,128 @@
+/* src/components/TypingChallenge.module.css */
+
+.challengeOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.95); /* Semi-transparent black overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top of everything */
+    font-family: 'VT323', monospace; /* Use a retro-tech font if available */
+    color: #00ff00; /* Green text for terminal look */
+    text-shadow: 0 0 5px #00ff00;
+    user-select: none; /* Prevent text selection */
+    cursor: none; /* Hide default cursor */
+}
+
+/* Optional: Add a subtle scanline or glitch effect for the overlay */
+.challengeOverlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(0, 255, 0, 0.05),
+        rgba(0, 255, 0, 0.05) 1px,
+        transparent 1px,
+        transparent 3px
+    );
+    pointer-events: none; /* Allow clicks to pass through to the challengeBox */
+}
+
+.challengeBox {
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #00ff00;
+    box-shadow: 0 0 20px #00ff00;
+    padding: 40px;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 80%;
+    transform: scale(1);
+    animation: challengeAppear 0.5s ease-out;
+}
+
+@keyframes challengeAppear {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.challengeTitle {
+    font-size: 3em;
+    margin-bottom: 20px;
+    color: #ff0000; /* Red for alert */
+    text-shadow: 0 0 8px #ff0000;
+    animation: glitchEffect 0.2s infinite alternate; /* Optional glitch effect */
+}
+
+@keyframes glitchEffect {
+    0% { text-shadow: 0 0 8px #ff0000; transform: translateX(0); }
+    33% { text-shadow: 2px 0 8px #ff0000; transform: translateX(-2px); }
+    66% { text-shadow: -2px 0 8px #ff0000; transform: translateX(2px); }
+    100% { text-shadow: 0 0 8px #ff0000; transform: translateX(0); }
+}
+
+.challengeInstruction {
+    font-size: 1.5em;
+    margin-bottom: 30px;
+    color: #ffffff;
+}
+
+.phraseDisplay {
+    font-size: 2.5em;
+    letter-spacing: 2px;
+    margin-bottom: 30px;
+    white-space: pre; /* Preserve spaces if any */
+}
+
+.correctChar {
+    color: #00ff00; /* Bright green for correct characters */
+}
+
+.incorrectChar {
+    color: #ff0000; /* Red for incorrect characters */
+    text-decoration: underline; /* Underline incorrect chars */
+}
+
+.typingInput {
+    background-color: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+    font-family: 'VT323', monospace;
+    font-size: 2em;
+    padding: 10px 15px;
+    width: 80%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 0 10px #00ff00;
+    outline: none; /* Remove default focus outline */
+}
+
+.typingInput:focus {
+    box-shadow: 0 0 15px #00ffff; /* Cyan glow on focus */
+}
+
+.timer {
+    font-size: 1.8em;
+    margin-top: 20px;
+    color: #ffff00; /* Yellow for warning */
+}
+
+.errorCount {
+    font-size: 1.4em;
+    color: #ffaa00; /* Orange for errors */
+}
+
+.statusMessage {
+    font-size: 2em;
+    margin-top: 20px;
+    font-weight: bold;
+    color: #00ffff; /* Cyan for success/failure message */
+    text-shadow: 0 0 10px #00ffff;
+}

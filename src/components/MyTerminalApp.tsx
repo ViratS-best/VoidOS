@@ -2,10 +2,18 @@
 import { WindowProps } from "prozilla-os";
 import React, { useState, useRef, useEffect, useCallback, useContext } from 'react';
 import styles from "./MyTerminalApp.module.css";
-import { OSShakeContext } from '../context/OSShakeContext'; // Import OSShakeContext
+import { OSShakeContext } from '../context/OSShakeContext.tsx';
 
 // Base URL for the Hack Club AI
 const AI_API_URL = "https://ai.hackclub.com/chat/completions";
+
+// --- CONSTANTS FOR WIN CONDITION (Hardcoded in this file) ---
+const SPECIAL_GLITCH_TRIGGER_COMMAND = "run system_log.txt"; // Command to trigger the clue
+const FLEETING_CLUE_KEY_VALUE = "4815162342"; // The actual key value
+const FLEETING_CLUE_DISPLAY_TEXT = `KEY: ${FLEETING_CLUE_KEY_VALUE}`; // The full string to display
+const FLEETING_CLUE_DURATION_MS = 1000; // How long the clue is visible (1 second)
+const FINAL_PURGE_COMMAND = "PURGE_PROTOCOL_INITIATE"; // The final "win" command
+// --- END NEW CONSTANTS ---
 
 export function MyTerminalApp({ app }: WindowProps) {
     const username = "Jefferery Heckerson";
@@ -24,6 +32,7 @@ export function MyTerminalApp({ app }: WindowProps) {
     const [aiInteractionCount, setAiInteractionCount] = useState(0);
 
     const terminalOutputRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null); // Added for auto-focus
 
     // Get context values for states and their setters
     const {
@@ -31,12 +40,13 @@ export function MyTerminalApp({ app }: WindowProps) {
         setIsOSShaking, // Need this setter to start/stop ambient effects
         initiateJumpscareSequence, // Need this function
         jumpscareScheduled, // Need to check if a jumpscare is already scheduled
-        setJumpscareScheduled // Need to set this to true once scheduled
+        setJumpscareScheduled, // Need to set this to true once scheduled
+        triggerWinScreen,   // Get win screen trigger from context
     } = useContext(OSShakeContext)!;
 
 
     // List of apps to randomly launch.
-    const launchableApps = ['my-custom-text-editor'];
+    const launchableApps = ['my-custom-text-editor', 'locked-notes']; // Added locked-notes
 
     const launchTimerRef = useRef<NodeJS.Timeout | null>(null);
     const devManifestJumpscareTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Dedicated for .dev_manifest jumpscare
@@ -80,7 +90,8 @@ export function MyTerminalApp({ app }: WindowProps) {
         }
 
         // Only schedule app launches if OS is shaking (i.e., horror mode is active)
-        if (isOSShaking) {
+        // and a jumpscare is not already scheduled (to avoid launching during jumpscare screen)
+        if (isOSShaking && !jumpscareScheduled) {
             launchTimerRef.current = setTimeout(triggerRandomAppLaunch, 100);
         }
 
@@ -89,7 +100,7 @@ export function MyTerminalApp({ app }: WindowProps) {
                 clearTimeout(launchTimerRef.current);
             }
         };
-    }, [triggerRandomAppLaunch, isOSShaking]);
+    }, [triggerRandomAppLaunch, isOSShaking, jumpscareScheduled]);
 
     // NEW HANDLER: Manages input display and corruption
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,7 +136,7 @@ export function MyTerminalApp({ app }: WindowProps) {
     };
 
 
-    const handleCommand = async (commandLine: string) => {
+    const handleCommand = useCallback(async (commandLine: string) => { // Wrapped in useCallback
         const trimmedLowerCommand = commandLine.trim().toLowerCase();
 
         let newOutput = [...output, prompt + commandLine];
@@ -135,11 +146,63 @@ export function MyTerminalApp({ app }: WindowProps) {
             clearTimeout(devManifestJumpscareTimeoutRef.current);
             devManifestJumpscareTimeoutRef.current = null;
             // Also turn off ambient shaking if it was started by the manifest trigger
-            if (isOSShaking && jumpscareScheduled) { // Check jumpscareScheduled to confirm it was OUR trigger
-                 setIsOSShaking(false);
+            // Only reset if it was specifically our trigger for this command
+            if (jumpscareScheduled) { // Check jumpscareScheduled to confirm it was OUR trigger
+                 setIsOSShaking(false); // Stop ambient effects
                  setJumpscareScheduled(false); // Reset this flag as the sequence is interrupted
             }
         }
+
+        // --- WIN CONDITION LOGIC START ---
+        // Check for the special glitch trigger command ("run system_log.txt")
+        if (trimmedLowerCommand === SPECIAL_GLITCH_TRIGGER_COMMAND.toLowerCase()) {
+            newOutput.push("Accessing corrupted log... ERROR. Corrupted data fragment found:");
+            // Display the clue briefly
+            setTimeout(() => {
+                newOutput = [...newOutput, FLEETING_CLUE_DISPLAY_TEXT]; // Append the clue
+                setOutput(newOutput); // Update state to show clue
+            }, 100); // Small delay to show "Corrupted data fragment found" first
+
+            setTimeout(() => {
+                // Remove the clue line from the output after the duration
+                setOutput(prev => prev.filter(line => line !== FLEETING_CLUE_DISPLAY_TEXT));
+                setOutput(prev => [...prev, "Fragment lost. Access denied."]); // Indicate it's gone
+            }, FLEETING_CLUE_DURATION_MS + 100); // Remove after clue duration + small delay
+
+            // Trigger ambient effects and schedule jumpscare only if not already scheduled by other means
+            if (!jumpscareScheduled) {
+                console.log("Terminal: run system_log.txt executed. Activating ambient horror and scheduling jumpscare.");
+                setIsOSShaking(true); // Start ambient effects
+                setJumpscareScheduled(true); // Mark as scheduled
+
+                devManifestJumpscareTimeoutRef.current = setTimeout(() => {
+                    console.log("Terminal: 5 seconds passed after run system_log.txt. Initiating jumpscare.");
+                    initiateJumpscareSequence(); // This will trigger the full sequence in App.tsx
+                }, 5000); // 5 seconds delay
+            }
+            setInput(''); // Clear input
+            setDisplayInput('');
+            return; // Important: Exit to prevent default 'command not found'
+        }
+
+        // Check for the final purge command (hardcoded)
+        if (trimmedLowerCommand === FINAL_PURGE_COMMAND.toLowerCase()) {
+            newOutput.push("Purge Protocol initiated. System integrity purging...");
+            setOutput(newOutput);
+            setIsLoading(true); // Show loading, simulate process
+
+            setTimeout(() => {
+                setOutput(prev => [...prev, "SYSTEM PURGED. VOID RECLAIMED."]);
+                setIsLoading(false);
+                // Trigger the win screen via context
+                triggerWinScreen("PROTOCOL COMPLETE."); // Use the context function
+                app.close(); // Close the terminal app
+            }, 2000); // Simulate purge process for 2 seconds
+            setInput('');
+            setDisplayInput('');
+            return; // Important
+        }
+        // --- WIN CONDITION LOGIC END ---
 
 
         if (trimmedLowerCommand === 'who are you?') {
@@ -204,16 +267,14 @@ The files... they rearrange themselves. Not alphabetically. By dread. By the pro
 
 2a072d075d06401614707204107106037265147070014380761160471670600100770542a170720272022b102073100010072076043141071077176100014041066060143a060120101037272161100010                            `;
                             newOutput.push(devManifestContent);
-
-                            // Trigger ambient effects and schedule jumpscare
-                            if (!jumpscareScheduled) { // Only if not already scheduled
+                            // UNCOMMENTED AND MODIFIED: Jumpscare logic for .dev_manifest
+                            if (!jumpscareScheduled) {
                                 console.log("Terminal: cat .dev_manifest executed. Activating ambient horror and scheduling jumpscare.");
                                 setIsOSShaking(true); // Start ambient effects
                                 setJumpscareScheduled(true); // Mark as scheduled
-
                                 devManifestJumpscareTimeoutRef.current = setTimeout(() => {
                                     console.log("Terminal: 5 seconds passed after .dev_manifest. Initiating jumpscare.");
-                                    initiateJumpscareSequence();
+                                    initiateJumpscareSequence(); // This will trigger the full sequence
                                 }, 5000); // 5 seconds delay
                             }
                             break;
@@ -310,7 +371,7 @@ The files... they rearrange themselves. Not alphabetically. By dread. By the pro
         if (!isLoading) {
             setOutput(newOutput);
         }
-    };
+    }, [aiActivated, aiInteractionCount, app, isOSShaking, jumpscareScheduled, output, prompt, setAiInteractionCount, setAiActivated, setIsLoading, setOutput, setIsOSShaking, setJumpscareScheduled, initiateJumpscareSequence, username, hostname, triggerWinScreen]); // Updated dependencies for useCallback
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && !isLoading) {
@@ -320,12 +381,23 @@ The files... they rearrange themselves. Not alphabetically. By dread. By the pro
         }
     };
 
+    // Focus input on app open
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, []);
+
     // Cleanup for the jumpscare timeout when Terminal App unmounts
     useEffect(() => {
         return () => {
             if (devManifestJumpscareTimeoutRef.current) {
                 clearTimeout(devManifestJumpscareTimeoutRef.current);
                 devManifestJumpscareTimeoutRef.current = null;
+            }
+            if (launchTimerRef.current) {
+                clearTimeout(launchTimerRef.current);
+                launchTimerRef.current = null;
             }
         };
     }, []);
@@ -341,6 +413,7 @@ The files... they rearrange themselves. Not alphabetically. By dread. By the pro
             <div className={styles.terminalInputLine}>
                 <span className={styles.terminalPrompt}>{prompt}</span>
                 <input
+                    ref={inputRef} // Assign ref to input
                     type="text"
                     className={styles.terminalInput}
                     value={displayInput}
@@ -348,7 +421,7 @@ The files... they rearrange themselves. Not alphabetically. By dread. By the pro
                     onKeyDown={handleKeyDown}
                     autoFocus
                     spellCheck="false"
-                    disabled={isLoading}
+                    disabled={isLoading || jumpscareScheduled} // Disable input if loading or jumpscare is scheduled
                 />
             </div>
         </div>

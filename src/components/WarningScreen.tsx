@@ -14,7 +14,7 @@ export const WarningScreen: React.FC<WarningScreenProps> = ({ onStart }) => {
     const [input, setInput] = useState('');
     const [output, setOutput] = useState([
         "WARNING!",
-        "THIS OS CONTAINS JUMPSCARES AND FLASHING LIGHTS!",
+        "THIS OS CONTAINS UNSTABLE SOFTWARE... FLASHING LIGHTS!",
         "PROCEED WITH CAUTION.",
         "",
         "Welcome to the VoidOS Initialization Console.",

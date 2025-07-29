@@ -2,7 +2,7 @@
 import { WindowProps } from "prozilla-os";
 import React, { useState, useRef, useEffect, useCallback, useContext } from 'react';
 import styles from "./MyTextEditorApp.module.css";
-import { OSShakeContext } from '../context/OSShakeContext'; // Import OSShakeContext
+import { OSShakeContext } from '../context/OSShakeContext'; // Correct import path
 
 // Ensure this text is long enough to require scrolling!
 const SECRET_TEXT = `
@@ -33,7 +33,18 @@ export function MyTextEditorApp({ app }: WindowProps) {
     const [editorContent, setEditorContent] = useState(SECRET_TEXT);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const { initiateJumpscareSequence, isOSShaking } = useContext(OSShakeContext)!;
+    // Get the context value.
+    const osShakeContextValue = useContext(OSShakeContext);
+
+    // Defensive check: If context is undefined, return null or handle error
+    if (!osShakeContextValue) {
+        console.error("MyTextEditorApp: OSShakeContext is undefined. Ensure MyTextEditorApp is wrapped by OSShakeProvider.");
+        return null; // Or throw an error, or render a fallback UI
+    }
+
+    // Corrected: Destructure ALL necessary properties from the context value
+    const { initiateJumpscareSequence, setIsOSShaking, jumpscareScheduled, isOSShaking } = osShakeContextValue;
+
     const [jumpscareTriggeredForSession, setJumpscareTriggeredForSession] = useState(false);
 
     // Scroll detection for activating the horror sequence
@@ -43,29 +54,30 @@ export function MyTextEditorApp({ app }: WindowProps) {
             const tolerance = 5; // Pixels from the very bottom, to account for rendering quirks
             const isAtBottom = (textarea.scrollHeight - textarea.scrollTop - textarea.clientHeight) <= tolerance;
 
-            // Trigger condition:
-            // 1. User has scrolled to the bottom.
-            // 2. The full jumpscare sequence has NOT been triggered yet in this OS session.
-            if (isAtBottom && !jumpscareTriggeredForSession) {
+            if (isAtBottom && !jumpscareTriggeredForSession && !jumpscareScheduled) {
                 console.log("MyTextEditorApp: Scrolled to bottom! Initiating Jumpscare sequence.");
-                setJumpscareTriggeredForSession(true); // Mark as triggered for this OS session
-
-                // Call the unified jumpscare initiation function from context.
-                // This function in App.tsx will manage turning off ambient horror,
-                // displaying the jumpscare, and resetting the OS.
-                initiateJumpscareSequence();
+                setJumpscareTriggeredForSession(true);
+                setIsOSShaking(true); // Start ambient OS shaking effects IMMEDIATELY
+                initiateJumpscareSequence(); // This will trigger the full jumpscare after a delay in App.tsx
             }
         }
-    }, [jumpscareTriggeredForSession, initiateJumpscareSequence]);
+    }, [jumpscareTriggeredForSession, jumpscareScheduled, initiateJumpscareSequence, setIsOSShaking]);
 
     // Effect to reset the 'jumpscareTriggeredForSession' flag when the OS itself resets
     // (meaning `isOSShaking` goes from true/false to false after a full reset).
+    // Also reset if jumpscareScheduled becomes false, indicating the sequence finished or was cancelled.
     useEffect(() => {
+        // Use the destructured isOSShaking here
         if (!isOSShaking && jumpscareTriggeredForSession) {
             setJumpscareTriggeredForSession(false);
-            console.log("MyTextEditorApp: Jumpscare trigger flag reset for new session.");
+            console.log("MyTextEditorApp: Jumpscare trigger flag reset for new session due to OS reset.");
         }
-    }, [isOSShaking, jumpscareTriggeredForSession]);
+        if (!jumpscareScheduled && jumpscareTriggeredForSession) {
+            setJumpscareTriggeredForSession(false);
+            console.log("MyTextEditorApp: Jumpscare trigger flag reset for new session due to jumpscare completion/cancellation.");
+        }
+    }, [isOSShaking, jumpscareScheduled, jumpscareTriggeredForSession]);
+
 
     // This useEffect ensures the scroll listener is added/removed correctly
     useEffect(() => {
