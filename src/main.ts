@@ -18,6 +18,6 @@ const myTerminalApp = new App(name, id, MyTerminalApp)
 	.setDescription("Your personalized terminal for VoidOS.")
  	// You'll need an icon. For now, you can use a placeholder or find a terminal icon SVG
  	// Example: .setIconUrl("https://raw.githubusercontent.com/prozilla-os/ProzillaOS/main/public/assets/icons/terminal.svg");
-    .setIconUrl("/terminal.png"); // Using ProzillaOS's default terminal icon for convenience
+    .setIconUrl("public/terminal.png"); // Using ProzillaOS's default terminal icon for convenience
 
 export { myTerminalApp };
