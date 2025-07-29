@@ -1,15 +1,12 @@
 // src/components/LockedNotesApp.tsx
 import { WindowProps } from "prozilla-os";
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { OSShakeContext } from '../context/OSShakeContext.tsx'; // Ensure .tsx extension
+import { OSShakeContext } from '../context/OSShakeContext';
 import styles from "./LockedNotesApp.module.css";
 
-// --- CONSTANTS FOR WIN CONDITION (Hardcoded in this file) ---
-const UNLOCK_KEY = "4815162342"; // The key from the Terminal clue
-const FINAL_PURGE_COMMAND = "PURGE_PROTOCOL_INITIATE"; // The final "win" command (must match Terminal)
-// --- END CONSTANTS ---
+const UNLOCK_KEY = "4815162342";
+const FINAL_PURGE_COMMAND = "PURGE_PROTOCOL_INITIATE";
 
-// The lore text to reveal (modified to include the final command)
 const LOCKED_CONTENT = "Enter the KEY to unlock these notes.";
 const UNLOCKED_CONTENT = (finalPurgeCommand: string) => `
 --- Jefferery's Final Notes: Project VoidOS - Log A.H. (After Horror) ---
@@ -33,7 +30,7 @@ The command is: ${finalPurgeCommand}
 `;
 
 const LORE_TEXT_PART2_SPAM = `
-asfghjkl;p'oiuytrewqazxcvbnm,./';lkjhgfdsapoijnbvcxz<MZXASDQWE_CVBNM>LKJUYTRFVBMJHGFDSXCXZASDFGHJKLOIJUHYGTREWSXZAqwertyuiopasdfghjklzxcvbnm,./;'[][POIUYTREWQASDFGHJKLMNBVCXZqwertyuioasdfghjklmnbvcxzxcvbnm,./;'poiuuytrewasdfghjklmjnbvcxzxcvbnm,lkiu;ytrfdcvgbhnjmkl;[]p[]oiuytrfghjkliuygftrdcvbhjnmk,l.;'poijhnbgfdswqazxcvbnm,.loikjuygtfrdeswqaszxcvbnml./;['][p;'olkiujyhtgrewsdfvgbhjnklm,'
+asfghjkl;p'oiuytrewqazxcvbnm,./';lkjhgfdsapoijnbvcxz<MZXASDQWE_CVBNM>LKJUYTRFVBMJHGFDSXCXZASDFGHJKLOIJUHYGTREWSXZAqwertyuiopasdfghjklzxcvbnm,./;'[][POIUYTREWQASDFGHJKLMNBVCXZqwertyuioasdfghjklmnbvcxzxcvbnm,lkiu;ytrfdcvgbhnjmkl;[]p[]oiuytrfghjkliuygftrdcvbhjnmk,l.;'poijhnbgfdswqazxcvbnm,.loikjuygtfrdeswqaszxcvbnml./;['][p;'olkiujyhtgrewsdfvgbhjnklm,'
 `;
 
 
@@ -46,14 +43,12 @@ export function LockedNotesApp({ app }: WindowProps) {
     const {
         isOSShaking,
         setIsOSShaking,
-        initiateJumpscareSequence,
         jumpscareScheduled,
         setJumpscareScheduled
     } = useContext(OSShakeContext)!;
 
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Focus on the input when the app opens
     useEffect(() => {
         if (inputRef.current && !accessGranted) {
             inputRef.current.focus();
@@ -62,39 +57,31 @@ export function LockedNotesApp({ app }: WindowProps) {
 
     const handlePasswordSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (jumpscareScheduled) return; // Prevent interaction if jumpscare is scheduled
+        if (jumpscareScheduled) return;
 
-        // Changed from CORRECT_PASSWORD to UNLOCK_KEY
-        if (passwordInput.trim() === UNLOCK_KEY) { // Use the hardcoded UNLOCK_KEY
+        if (passwordInput.trim() === UNLOCK_KEY) {
             setAccessGranted(true);
             setStatusMessage('');
             console.log("LockedNotesApp: Access granted!");
-            // No need to reset jumpscareScheduled/isOSShaking here, as login doesn't inherently prevent future horror
-            // The horror context manages its own timing for ambient effects
         } else {
             const newAttempts = attempts + 1;
             setAttempts(newAttempts);
-            setPasswordInput(''); // Clear input on incorrect attempt
-            setStatusMessage(`Incorrect key. Attempts left: ${5 - newAttempts}`); // Use 5 for MAX_ATTEMPTS
+            setPasswordInput('');
+            setStatusMessage(`Incorrect key. Attempts left: ${5 - newAttempts}`);
             console.warn(`LockedNotesApp: Incorrect key. Attempts: ${newAttempts}`);
 
-            if (newAttempts >= 5) { // Use 5 for MAX_ATTEMPTS
+            if (newAttempts >= 5) {
                 console.error("LockedNotesApp: Max attempts reached! Initiating jumpscare.");
                 setStatusMessage('System integrity compromised...');
+                setIsOSShaking(true);
 
-                setIsOSShaking(true); // Trigger ambient horror
-
-                if (!jumpscareScheduled) { // Only if not already scheduled
-                    setJumpscareScheduled(true); // Mark as scheduled
-                    setTimeout(() => {
-                        initiateJumpscareSequence();
-                    }, 2000); // 2-second delay before the full jumpscare sequence starts
+                if (!jumpscareScheduled) {
+                    setJumpscareScheduled(true);
                 }
             }
         }
     };
 
-    // Prevent input if jumpscare is scheduled
     const isDisabled = jumpscareScheduled;
 
 
@@ -107,7 +94,7 @@ export function LockedNotesApp({ app }: WindowProps) {
                     <form onSubmit={handlePasswordSubmit}>
                         <input
                             ref={inputRef}
-                            type="text" // Changed to text so user can see what they type (or keep password for challenge)
+                            type="text"
                             value={passwordInput}
                             onChange={(e) => setPasswordInput(e.target.value)}
                             disabled={isDisabled}
@@ -127,7 +114,7 @@ export function LockedNotesApp({ app }: WindowProps) {
                 <div className={styles.notesContent}>
                     <h2>Jefferery's Final Confession</h2>
                     <pre className={styles.loreText}>
-                        {UNLOCKED_CONTENT(FINAL_PURGE_COMMAND)} {/* Pass the hardcoded command */}
+                        {UNLOCKED_CONTENT(FINAL_PURGE_COMMAND)}
                         <br/><br/>
                         <span className={styles.glitchingText}>{LORE_TEXT_PART2_SPAM}</span>
                     </pre>

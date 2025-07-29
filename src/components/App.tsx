@@ -1,10 +1,10 @@
-// prozilla-os/src/components/App.tsx
+// src/components/App.tsx
 import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { Desktop, ModalsView, ProzillaOS, Taskbar, WindowsView } from "prozilla-os";
 import { appsConfig } from "../config/appsConfig";
 import { desktopConfig } from "../config/desktopConfig";
 import { WarningScreen } from './WarningScreen';
-import { OSShakeContext } from '../context/OSShakeContext';
+import { OSShakeContext, OSShakeProvider } from '../context/OSShakeContext';
 import styles from './App.module.css';
 import { WinScreen } from './WinScreen';
 import { TypingChallenge } from './TypingChallenge';
@@ -17,10 +17,11 @@ const POST_JUMPSCARE_RESET_DELAY_MS = 1000;
 const UNSETTLING_AMBIENT_AUDIO = "/audio/unsettling_hum.mp3";
 const JUMPSCARE_AUDIO = "/audio/scream_jumpscare.mp3";
 const GHOSTLY_IMAGE_URL = "/images/ghostly_face.png";
-const CHALLENGE_TRIGGER_DELAY_MS = 20000; // Time before next challenge appears
-const CHALLENGES_BEFORE_BOSS = 5; // Number of successful typing challenges before the boss fight
+const CHALLENGE_TRIGGER_DELAY_MS = 20000;
+const CHALLENGES_BEFORE_BOSS = 5;
 
-export function App() {
+// This component is the entry point of your application
+const AppContent = () => {
     const [showWarningScreen, setShowWarningScreen] = useState(true);
     const [isOSActive, setIsOSActive] = useState(false);
     const [isFadingToWhite, setIsFadingToWhite] = useState(false);
@@ -32,7 +33,6 @@ export function App() {
     const [isCursorDistorted, setIsCursorDistorted] = useState(false);
     const [prozillaOSKey, setProzillaOSKey] = useState(0);
 
-    // NEW STATE: A key to force TypingChallenge to re-initialize
     const [challengeDisplayKey, setChallengeDisplayKey] = useState(0);
 
     const ambientEffectIntervalsRef = useRef<NodeJS.Timeout[]>([]);
@@ -44,9 +44,9 @@ export function App() {
 
     const {
         isOSShaking,
-        setIsOSShaking: setOSShakingContext,
+        setIsOSShaking,
         jumpscareScheduled,
-        setJumpscareScheduled: setJumpscareScheduledContext,
+        setJumpscareScheduled,
         showWinScreen,
         winScreenMessage,
         resetGameSession,
@@ -55,6 +55,7 @@ export function App() {
         challengeCount,
         triggerWinScreen,
     } = useContext(OSShakeContext)!;
+
 
     const clearAllHorrorTimersAndResetStates = useCallback(() => {
         console.log("App.tsx cleanup: Clearing all horror intervals and resetting states.");
@@ -68,8 +69,7 @@ export function App() {
             gameProgressionTimeoutRef.current = null;
         }
 
-        setOSShakingContext(false);
-        setJumpscareScheduledContext(false);
+        setIsOSShaking(false);
         setIsFadingToWhite(false);
         setShowJumpscare(false);
         setShowGlitchOverlay(false);
@@ -89,18 +89,16 @@ export function App() {
             jumpscareAudioRef.current.pause();
             jumpscareAudioRef.current.currentTime = 0;
         }
-        // IMPORTANT: Ensure setIsChallengeActive(false) is called here during a full reset.
         setIsChallengeActive(false); 
         console.log("All horror timers cleared and states reset.");
-    }, [setOSShakingContext, setJumpscareScheduledContext, setIsChallengeActive]);
+    }, [setIsOSShaking, setIsChallengeActive]);
 
     const initiateJumpscareSequenceLocal = useCallback(() => {
         console.log("App.tsx: Executing full initiateJumpscareSequenceLocal (visuals & audio)!");
-        // First, clear everything. This will set isChallengeActive to false.
+        
         clearAllHorrorTimersAndResetStates();
         setIsFadingToWhite(true);
 
-        // Schedule the jumpscare and subsequent reset.
         const fadeToJumpscareTimeout = setTimeout(() => {
             setShowJumpscare(true);
             if (jumpscareAudioRef.current) {
@@ -120,11 +118,9 @@ export function App() {
                     setIsOSActive(false);
                     setProzillaOSKey(prev => prev + 1);
                     setIsFadingToWhite(false);
-                    resetGameSession(); // This will reset challengeCount to 0
-                    setChallengeDisplayKey(0); // Reset the challenge display key for a new game
+                    resetGameSession();
+                    setChallengeDisplayKey(0);
                     console.log("App.tsx: Full OS reset to Warning Screen after jumpscare.");
-                    // After a full reset to warning screen, ensure no challenge is immediately scheduled.
-                    // The `handleStartOS` function will handle scheduling the first challenge.
                 }, POST_JUMPSCARE_RESET_DELAY_MS);
                 jumpscareTimeoutsRef.current.push(resetToWarningTimeout);
 
@@ -134,9 +130,8 @@ export function App() {
         }, FADE_TO_JUMPSCARE_DELAY_MS);
         jumpscareTimeoutsRef.current.push(fadeToJumpscareTimeout);
 
-    }, [clearAllHorrorTimersAndResetStates, resetGameSession, setProzillaOSKey, setIsOSActive, setShowWarningScreen, setIsFadingToWhite]);
+    }, [clearAllHorrorTimersAndResetStates, resetGameSession]);
 
-    // This useEffect will now have an additional condition to prevent re-triggering during jumpscare sequence.
     useEffect(() => {
         if (jumpscareScheduled) {
             console.log("App.tsx: Detected jumpscareScheduled is TRUE from context. Initiating local sequence.");
@@ -145,64 +140,67 @@ export function App() {
     }, [jumpscareScheduled, initiateJumpscareSequenceLocal]);
 
     const scheduleNextGameEvent = useCallback(() => {
-        clearAllHorrorTimersAndResetStates(); // This ensures all states are clean before new event.
-        // Increment the challengeDisplayKey to force a fresh mount/initialization of TypingChallenge
+        clearAllHorrorTimersAndResetStates();
         setChallengeDisplayKey(prevKey => prevKey + 1);
 
         if (challengeCount >= CHALLENGES_BEFORE_BOSS) {
             console.log(`App.tsx: ${challengeCount} challenges completed. Initiating FINAL BOSS FIGHT!`);
             gameProgressionTimeoutRef.current = setTimeout(() => {
-                setIsChallengeActive(true); // Activate challenge
-                setOSShakingContext(false); // Stop shaking when challenge is active
+                setIsChallengeActive(true);
+                setIsOSShaking(false);
                 console.log("App.tsx: Boss fight activated!");
             }, 3000);
         } else {
             console.log(`App.tsx: Scheduling next challenge (Challenge ${challengeCount + 1} of ${CHALLENGES_BEFORE_BOSS}) to appear in ${CHALLENGE_TRIGGER_DELAY_MS / 1000} seconds.`);
             gameProgressionTimeoutRef.current = setTimeout(() => {
-                setIsChallengeActive(true); // Activate challenge
-                setOSShakingContext(false); // Stop shaking when challenge is active
+                setIsChallengeActive(true);
+                setIsOSShaking(false);
                 console.log("App.tsx: Challenge activated!");
             }, CHALLENGE_TRIGGER_DELAY_MS);
         }
-    }, [challengeCount, setIsChallengeActive, setOSShakingContext, clearAllHorrorTimersAndResetStates]);
+    }, [challengeCount, setIsChallengeActive, setIsOSShaking, clearAllHorrorTimersAndResetStates]);
+
 
     const handleStartOS = useCallback(() => {
         console.log("App.tsx: Starting full OS normally.");
         setShowWarningScreen(false);
         setIsOSActive(true);
-        resetGameSession(); // This will reset challengeCount to 0
-        setChallengeDisplayKey(0); // Ensure challengeDisplayKey starts from 0 for a new game
-        scheduleNextGameEvent(); // Schedule the very first challenge here.
+        resetGameSession();
+        setChallengeDisplayKey(0);
+
+        if (ambientAudioRef.current) {
+            ambientAudioRef.current.volume = 0;
+            ambientAudioRef.current.play().catch(e => console.error("Ambient audio priming failed:", e));
+            ambientAudioRef.current.pause();
+        }
+        if (jumpscareAudioRef.current) {
+            jumpscareAudioRef.current.volume = 0;
+            jumpscareAudioRef.current.play().catch(e => console.error("Jumpscare audio priming failed:", e));
+            jumpscareAudioRef.current.pause();
+        }
+
+        scheduleNextGameEvent();
     }, [resetGameSession, scheduleNextGameEvent]);
 
-    // Effect to re-schedule next game event when challenge completes successfully
     useEffect(() => {
-        // This condition now also checks jumpscareScheduled to prevent accidental rescheduling during a jumpscare.
-        // It triggers when isChallengeActive *becomes* false, meaning a challenge just ended.
-        // Also ensure showWinScreen is false, so we don't schedule a new challenge after winning.
         if (!isChallengeActive && !jumpscareScheduled && !showWinScreen && isOSActive) {
             const debounceTimer = setTimeout(() => {
                 console.log(`App.tsx: Challenge just completed/failed. Scheduling next game event. Current count: ${challengeCount}`);
                 scheduleNextGameEvent();
-            }, 500); // Small debounce to ensure all context updates have settled
+            }, 500);
 
             return () => clearTimeout(debounceTimer);
         }
-        // Added triggerWinScreen to dependencies, though its a function, react handles it.
     }, [isChallengeActive, jumpscareScheduled, showWinScreen, isOSActive, challengeCount, scheduleNextGameEvent, triggerWinScreen]);
 
-
     useEffect(() => {
-        console.log("App.tsx useEffect [isOSShaking from context] running. isOSShaking:", isOSShaking);
+        console.log("App.tsx useEffect [isOSShaking] running. isOSShaking:", isOSShaking);
         
-        // Clear ambient intervals always when isOSShaking state changes to avoid lingering effects
         ambientEffectIntervalsRef.current.forEach(clearInterval);
         ambientEffectIntervalsRef.current = [];
-        console.log("App.tsx: Cleared all ambient effect intervals (due to isOSShaking change from context).");
+        console.log("App.tsx: Cleared all ambient effect intervals.");
 
         if (!isOSShaking) {
-            // Only reset these visual states if NOT shaking, AND a jumpscare is NOT scheduled
-            // This prevents interference if jumpscare is about to take over
             if (!jumpscareScheduled) { 
                 setShowGlitchOverlay(false);
                 setShowFlashOverlay(false);
@@ -218,7 +216,7 @@ export function App() {
             }
         }
 
-        if (isOSShaking && !jumpscareScheduled) { // Only activate ambient effects if NOT already in jumpscare sequence
+        if (isOSShaking && !jumpscareScheduled) {
             console.log("App.tsx: Ambient horror effects are now ACTIVATED!");
             if (ambientAudioRef.current) {
                 ambientAudioRef.current.volume = 0.4;
@@ -257,11 +255,9 @@ export function App() {
         }
 
         return () => {
-            console.log("App.tsx useEffect [isOSShaking from context] cleanup function running (return).");
+            console.log("App.tsx useEffect [isOSShaking] cleanup function running (return).");
             ambientEffectIntervalsRef.current.forEach(clearInterval);
             ambientEffectIntervalsRef.current = [];
-            // Do NOT clear jumpscareTimeoutsRef here. It's handled by clearAllHorrorTimersAndResetStates
-            // or specifically by initiateJumpscareSequenceLocal's own cleanup.
             setShowGlitchOverlay(false);
             setShowFlashOverlay(false);
             setShowGhostlyOverlay(false);
@@ -274,7 +270,7 @@ export function App() {
                 ambientAudioRef.current.currentTime = 0;
             }
         };
-    }, [isOSShaking, jumpscareScheduled, setOSShakingContext]);
+    }, [isOSShaking, jumpscareScheduled, setIsOSShaking]);
 
     useEffect(() => {
         if (isCursorDistorted) {
@@ -322,7 +318,6 @@ export function App() {
                     <audio ref={ambientAudioRef} src={UNSETTLING_AMBIENT_AUDIO} preload="auto" />
                     <audio ref={jumpscareAudioRef} src={JUMPSCARE_AUDIO} preload="auto" />
 
-                    {/* Visual Overlays */}
                     {isFadingToWhite && (<div className={styles.whiteFadeOverlay}></div>)}
                     {isOSShaking && (<div className={styles.vignetteOverlay}></div>)}
                     {showGlitchOverlay && (<div className={styles.glitchOverlay}></div>)}
@@ -340,10 +335,8 @@ export function App() {
                         </div>
                     )}
 
-                    {/* Typing Challenge (or Boss Fight) */}
                     {isChallengeActive && (
                         <>
-                            {/* The key here is critical for forcing a new instance of TypingChallenge */}
                             <TypingChallenge
                                 key={challengeDisplayKey}
                                 isBossFight={challengeCount >= CHALLENGES_BEFORE_BOSS}
@@ -351,7 +344,6 @@ export function App() {
                         </>
                     )}
 
-                    {/* Jumpscare GIF overlay */}
                     {showJumpscare && (
                         <div className={styles.jumpscareOverlay}>
                             <img
@@ -362,12 +354,20 @@ export function App() {
                         </div>
                     )}
 
-                    {/* Win Screen */}
                     {showWinScreen && (
-                        <WinScreen message={winScreenMessage} />
+                        <WinScreen />
                     )}
                 </>
             )}
         </div>
+    );
+};
+
+// Main App component with the OSShakeProvider wrapper
+export function App() {
+    return (
+        <OSShakeProvider>
+            <AppContent />
+        </OSShakeProvider>
     );
 }

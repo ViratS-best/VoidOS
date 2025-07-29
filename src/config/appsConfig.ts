@@ -1,23 +1,25 @@
-// src/config/appsConfig.ts
-import { AppsConfig, browser, calculator, fileExplorer, settings } from "prozilla-os";
-// IMPORT YOUR NEW TERMINAL AND TEXT EDITOR APPS
-import { myTerminalApp } from "../main"; // Assuming you have a custom terminal defined in main.ts/main.tsx
-import { myTextEditorApp } from "../apps/myTextEditorApp"; // Import your custom text editor app instance
-import { myLockedNotesApp } from "../apps/lockedNotesApp"; // Import the new locked notes app instance
+import { AppsConfig, browser, calculator, fileExplorer, settings, Vector2 } from "prozilla-os";
+import { myTerminalApp } from "../main";
+import { myTextEditorApp } from "../apps/myTextEditorApp";
+import { myLockedNotesApp } from "../apps/lockedNotesApp";
 
-// Set the default homepage for the browser app using windowOptions
 browser.windowOptions = {
     ...(browser.windowOptions || {}),
-    url: "https://www.google.com/search?igu=1&q=whats up?" // Example, you can change this
+    url: "https://www.google.com/search?igu=1&q=whats up?",
+    // Corrected: Added a default size to satisfy the type check
+    size: {
+        x: 1000,
+        y: 800
+    } as Vector2
 };
 
 export const appsConfig = new AppsConfig({
     apps: [
         fileExplorer.setName("File Explorer")
             .setDescription("Application for Browse files."),
-        myTerminalApp, // Pass the App instance directly
-        myTextEditorApp, // Pass the App instance directly
-        myLockedNotesApp, // Pass the new Locked Notes App instance directly
+        myTerminalApp,
+        myTextEditorApp,
+        myLockedNotesApp,
         browser
             .setName("Web Browser")
             .setDescription("Browse the web with this browser app."),

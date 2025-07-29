@@ -1,4 +1,3 @@
-// src/context/OSShakeContext.tsx
 import React, { createContext, useState, useEffect, useRef, useCallback } from 'react';
 
 interface OSShakeContextType {
@@ -14,12 +13,16 @@ interface OSShakeContextType {
     setChallengeCount: (count: number) => void;
     isChallengeActive: boolean;
     setIsChallengeActive: (active: boolean) => void;
-    completeChallenge: (success: boolean) => void; // MODIFIED: Added 'success' parameter
+    completeChallenge: (success: boolean) => void;
 }
 
 export const OSShakeContext = createContext<OSShakeContextType | undefined>(undefined);
 
-export const OSShakeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface OSShakeProviderProps {
+    children: React.ReactNode;
+}
+
+export const OSShakeProvider: React.FC<OSShakeProviderProps> = ({ children }) => {
     const [isOSShaking, setIsOSShaking] = useState(false);
     const [jumpscareScheduled, setJumpscareScheduled] = useState(false);
     const [showWinScreen, setShowWinScreen] = useState(false);
@@ -29,22 +32,19 @@ export const OSShakeProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const challengeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    // This effect handles the OS shaking based on challengeCount
     useEffect(() => {
-        // Clear any existing interval to prevent duplicates
         if (challengeIntervalRef.current) {
             clearInterval(challengeIntervalRef.current);
             challengeIntervalRef.current = null;
         }
 
-        // Adjust shake intensity based on challengeCount
-        let shakeIntervalDuration = 0; // No shake by default
+        let shakeIntervalDuration = 0;
         if (challengeCount >= 1 && challengeCount < 3) {
-            shakeIntervalDuration = 5000; // Moderate shake
+            shakeIntervalDuration = 5000;
         } else if (challengeCount >= 3 && challengeCount < 5) {
-            shakeIntervalDuration = 3000; // Stronger shake
-        } else if (challengeCount >= 5) { // Boss fight or post-boss
-            shakeIntervalDuration = 1000; // Very strong shake / constant
+            shakeIntervalDuration = 3000;
+        } else if (challengeCount >= 5) {
+            shakeIntervalDuration = 1000;
         }
 
         if (shakeIntervalDuration > 0 && !isChallengeActive && !jumpscareScheduled && !showWinScreen) {
@@ -52,40 +52,37 @@ export const OSShakeProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 setIsOSShaking(true);
                 setTimeout(() => {
                     setIsOSShaking(false);
-                }, 500); // Shake for 0.5 seconds
+                }, 500);
             }, shakeIntervalDuration);
         } else {
-            setIsOSShaking(false); // Ensure shaking is off if conditions not met
+            setIsOSShaking(false);
         }
 
-        // Cleanup function for when the component unmounts or dependencies change
         return () => {
             if (challengeIntervalRef.current) {
                 clearInterval(challengeIntervalRef.current);
             }
         };
-    }, [challengeCount, isChallengeActive, jumpscareScheduled, showWinScreen]); // Dependencies for useEffect
+    }, [challengeCount, isChallengeActive, jumpscareScheduled, showWinScreen]);
 
-    const completeChallenge = useCallback((success: boolean) => { // MODIFIED: Now accepts 'success'
+    const completeChallenge = useCallback((success: boolean) => {
         console.log(`OSShakeContext: completeChallenge called. Success: ${success}`);
-        setIsChallengeActive(false); // Deactivate challenge UI
+        setIsChallengeActive(false);
         if (success) {
             setChallengeCount(prevCount => prevCount + 1);
             console.log(`OSShakeContext: Challenge successful. New count: ${challengeCount + 1}`);
-            // No jumpscare on success, App.tsx will handle next challenge.
         } else {
             console.log("OSShakeContext: Challenge failed. Scheduling jumpscare.");
-            setJumpscareScheduled(true); // <--- Trigger jumpscare on failure!
-            // Do NOT increment challengeCount on failure.
+            setJumpscareScheduled(true);
         }
-    }, [setIsChallengeActive, setChallengeCount, setJumpscareScheduled]); // Added setJumpscareScheduled to deps
+    }, [setIsChallengeActive, setChallengeCount, setJumpscareScheduled]);
 
     const resetGameSession = useCallback(() => {
         console.log("OSShakeContext: resetGameSession called.");
         setChallengeCount(0);
         setIsChallengeActive(false);
         setIsOSShaking(false);
-        setJumpscareScheduled(false); // Reset jumpscare state on full game reset
+        setJumpscareScheduled(false);
         setShowWinScreen(false);
         setWinScreenMessage("");
         if (challengeIntervalRef.current) {
@@ -98,10 +95,10 @@ export const OSShakeProvider: React.FC<{ children: React.ReactNode }> = ({ child
         console.log("OSShakeContext: triggerWinScreen called.");
         setShowWinScreen(true);
         setWinScreenMessage(message);
-        setIsOSShaking(false); // Stop ambient effects on win
-        setIsChallengeActive(false); // Deactivate challenge
-        setJumpscareScheduled(false); // Ensure no jumpscare triggers after win
-        resetGameSession(); // Optionally reset game state for a clean start after win screen.
+        setIsOSShaking(false);
+        setIsChallengeActive(false);
+        setJumpscareScheduled(false);
+        resetGameSession();
     }, [setShowWinScreen, setWinScreenMessage, setIsOSShaking, setIsChallengeActive, setJumpscareScheduled, resetGameSession]);
 
 
@@ -112,7 +109,7 @@ export const OSShakeProvider: React.FC<{ children: React.ReactNode }> = ({ child
         resetGameSession,
         challengeCount, setChallengeCount,
         isChallengeActive, setIsChallengeActive,
-        completeChallenge
+        completeChallenge,
     };
 
     return (
