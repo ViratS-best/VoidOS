@@ -35,7 +35,7 @@ const CHALLENGE_TIME_LIMIT_MS = 10000;
 const MAX_ERRORS = 3;
 
 export const TypingChallenge: React.FC<{ isBossFight?: boolean }> = ({ isBossFight = false }) => {
-    const { completeChallenge, triggerWinScreen } = useContext(OSShakeContext)!;
+    const { completeChallenge, triggerWinScreen, triggerJumpscare } = useContext(OSShakeContext)!;
 
     const [currentPhrase, setCurrentPhrase] = useState<ChallengePhrase | null>(null);
     const [typedText, setTypedText] = useState('');
@@ -45,6 +45,7 @@ export const TypingChallenge: React.FC<{ isBossFight?: boolean }> = ({ isBossFig
     const [isLoadingPhrase, setIsLoadingPhrase] = useState(true);
     const [isChallengeStarted, setIsChallengeStarted] = useState(false);
     const [isChallengeEnded, setIsChallengeEnded] = useState(false); // New state for explicit challenge end
+    const [inputEnabled, setInputEnabled] = useState(false);
 
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -95,6 +96,14 @@ export const TypingChallenge: React.FC<{ isBossFight?: boolean }> = ({ isBossFig
         }
     }, [isChallengeStarted]);
 
+    // ADD A useEffect to focus the input when the challenge starts or when re-rendered
+    useEffect(() => {
+        if (inputRef.current && isChallengeStarted && !isChallengeEnded) {
+            inputRef.current.focus();
+        }
+    }, [isChallengeStarted, isChallengeEnded]);
+
+
     // Timer logic
     useEffect(() => {
         let timer: NodeJS.Timeout | undefined;
@@ -138,14 +147,28 @@ export const TypingChallenge: React.FC<{ isBossFight?: boolean }> = ({ isBossFig
         };
     }, [isChallengeStarted, currentPhrase, isChallengeEnded, completeChallenge, isBossFight]);
 
+    // When challenge starts, reset inputEnabled to false
+    useEffect(() => {
+        setInputEnabled(false);
+    }, [isChallengeStarted, isBossFight]);
+
+    // Enable input and focus on first click anywhere in challenge box or input
+    const handleEnableInput = () => {
+        if (!inputEnabled) {
+            setInputEnabled(true);
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 0);
+        } else {
+            inputRef.current?.focus();
+        }
+    };
+
     // Handle user input
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        console.log(`TypingChallenge: handleInputChange. Typed: '${e.target.value}', Current Phrase: '${currentPhrase?.text}'`);
-        if (!currentPhrase || isChallengeEnded) {
-            console.log("TypingChallenge: Input ignored (no phrase or challenge ended).");
+        if (!inputEnabled || !currentPhrase || isChallengeEnded || !isChallengeStarted) {
             return;
         }
-
         const newTypedText = e.target.value;
         setTypedText(newTypedText);
 
@@ -156,41 +179,36 @@ export const TypingChallenge: React.FC<{ isBossFight?: boolean }> = ({ isBossFig
             }
         }
         setErrors(currentErrors);
-        console.log(`TypingChallenge: Current errors: ${currentErrors}/${MAX_ERRORS}`);
-
 
         if (newTypedText === currentPhrase.text) {
-            console.log("TypingChallenge: Phrase typed correctly! Triggering success sequence.");
             setStatusMessage(isBossFight ? "FINAL ENCRYPTION BYPASSED!" : "ACCESS GRANTED!");
             setIsChallengeStarted(false);
 
             if (isBossFight) {
-                console.log("TypingChallenge: Boss fight success. Triggering win screen.");
                 triggerWinScreen("You have successfully breached the final encryption and defeated the Void Protocol. Humanity is safe... for now.");
             } else {
                 setIsChallengeEnded(true);
                 setTimeout(() => {
-                    console.log("TypingChallenge: Regular challenge success. Calling completeChallenge(true).");
-                    completeChallenge(true); // <--- Pass true for success
+                    completeChallenge(true);
                 }, 2000);
             }
         } else if (currentErrors >= MAX_ERRORS) {
-            console.log("TypingChallenge: Too many errors! Triggering failure sequence.");
             setStatusMessage("ACCESS DENIED!");
             setIsChallengeStarted(false);
+
+            // Trigger jumpscare on loss
+            triggerJumpscare();
 
             if (!isBossFight) {
                 setIsChallengeEnded(true);
                 setTimeout(() => {
-                    console.log("TypingChallenge: Regular challenge failure. Calling completeChallenge(false).");
-                    completeChallenge(false); // <--- Pass false for failure
+                    completeChallenge(false);
                 }, 2000);
             } else {
-                console.log("TypingChallenge: Boss fight failure. Calling completeChallenge(false).");
-                completeChallenge(false); // <--- Pass false for failure
+                completeChallenge(false);
             }
         }
-    }, [currentPhrase, completeChallenge, isBossFight, triggerWinScreen, isChallengeEnded]);
+    }, [inputEnabled, currentPhrase, completeChallenge, isBossFight, triggerWinScreen, triggerJumpscare, isChallengeEnded, isChallengeStarted]);
 
     // Character class for visual feedback
     const getCharClassName = useCallback((char: string, index: number) => {
@@ -200,6 +218,16 @@ export const TypingChallenge: React.FC<{ isBossFight?: boolean }> = ({ isBossFig
         }
         return '';
     }, [typedText, currentPhrase]);
+
+    // ADD this function to refocus the input when the challenge box is clicked
+    const handleContainerClick = () => {
+        if (
+            inputRef.current &&
+            !inputRef.current.disabled
+        ) {
+            inputRef.current.focus();
+        }
+    };
 
     // Loading state UI
     if (isLoadingPhrase || !currentPhrase) {
@@ -228,9 +256,9 @@ export const TypingChallenge: React.FC<{ isBossFight?: boolean }> = ({ isBossFig
     // Active challenge UI
     return (
         <div className={styles.challengeOverlay}>
-            <div className={styles.challengeBox}>
+            <div className={styles.challengeBox} onClick={handleEnableInput}>
                 <h2 className={styles.challengeTitle}>{isBossFight ? "FINAL ENCRYPTION" : "SECURITY PROTOCOL ACTIVE"}</h2>
-                <p className={styles.challengeInstruction}>Type the phrase below to proceed BTW if you click youre screwed:</p>
+                <p className={styles.challengeInstruction}>Type the phrase below to proceed. Click to activate typing.</p>
                 <div className={styles.phraseDisplay}>
                     {currentPhrase.text.split('').map((char, index) => (
                         <span key={index} className={getCharClassName(char, index)}>
@@ -244,12 +272,14 @@ export const TypingChallenge: React.FC<{ isBossFight?: boolean }> = ({ isBossFig
                     className={styles.typingInput}
                     value={typedText}
                     onChange={handleInputChange}
-                    // Disable input if conditions met or challenge ended
-                    disabled={timeLeft === 0 || typedText === currentPhrase.text || errors >= MAX_ERRORS || !isChallengeStarted || isChallengeEnded}
                     aria-label="Type the challenge phrase"
                     autoCorrect="off"
                     autoCapitalize="off"
                     spellCheck="false"
+                    placeholder={inputEnabled && isChallengeStarted && !isChallengeEnded ? "" : "Click to activate"}
+                    style={!(inputEnabled && isChallengeStarted && !isChallengeEnded) ? { opacity: 0.5, pointerEvents: "auto", cursor: "pointer" } : {}}
+                    onClick={handleEnableInput}
+                    tabIndex={0}
                 />
                 <p className={styles.timer}>Time Left: {timeLeft}s</p>
                 <p className={styles.errorCount}>Errors: {errors} / {MAX_ERRORS}</p>

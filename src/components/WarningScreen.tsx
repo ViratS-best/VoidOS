@@ -21,6 +21,8 @@ export const WarningScreen: React.FC<WarningScreenProps> = ({ onStart }) => {
         "Type 'help' to proceed."
     ]);
     const terminalOutputRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null); // ADD THIS REF
+    const [inputEnabled, setInputEnabled] = useState(false);
 
     // Auto-scroll to bottom whenever output changes
     useEffect(() => {
@@ -29,11 +31,26 @@ export const WarningScreen: React.FC<WarningScreenProps> = ({ onStart }) => {
         }
     }, [output]);
 
+    // REMOVE THE AUTO-FOCUS EFFECT
+
+    // New: Enable input and focus on first click anywhere in terminal or input
+    const handleTerminalClick = () => {
+        if (!inputEnabled) {
+            setInputEnabled(true);
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 0);
+        } else {
+            inputRef.current?.focus();
+        }
+    };
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setInput(e.target.value);
+        if (inputEnabled) setInput(e.target.value);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!inputEnabled) return;
         if (e.key === 'Enter') {
             handleCommand(input);
             setInput(''); // Clear input after command
@@ -68,7 +85,7 @@ export const WarningScreen: React.FC<WarningScreenProps> = ({ onStart }) => {
     };
 
     return (
-        <div className={styles.terminalContainer}>
+        <div className={styles.terminalContainer} onClick={handleTerminalClick}>
             <div className={styles.terminalOutput} ref={terminalOutputRef}>
                 {output.map((line, index) => (
                     <div key={index}>{line}</div>
@@ -77,13 +94,18 @@ export const WarningScreen: React.FC<WarningScreenProps> = ({ onStart }) => {
             <div className={styles.terminalInputLine}>
                 <span className={styles.terminalPrompt}>{prompt}</span>
                 <input
+                    ref={inputRef}
                     type="text"
                     className={styles.terminalInput}
                     value={input}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
-                    autoFocus
                     spellCheck="false"
+                    tabIndex={0}
+                    autoFocus={false}
+                    placeholder={inputEnabled ? "" : "Click to activate"}
+                    style={!inputEnabled ? { opacity: 0.5, pointerEvents: "auto", cursor: "pointer" } : {}}
+                    onClick={handleTerminalClick}
                 />
             </div>
         </div>

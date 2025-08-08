@@ -33,6 +33,8 @@ export function MyTextEditorApp({ app }: WindowProps) {
     const [editorContent, setEditorContent] = useState(SECRET_TEXT);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    const [jumpscareTriggeredForSession, setJumpscareTriggeredForSession] = useState(false); // <-- ADD THIS LINE
+
     const osShakeContextValue = useContext(OSShakeContext);
 
     if (!osShakeContextValue) {
@@ -41,8 +43,6 @@ export function MyTextEditorApp({ app }: WindowProps) {
     }
 
     const { setJumpscareScheduled, setIsOSShaking, jumpscareScheduled, isOSShaking } = osShakeContextValue;
-
-    const [jumpscareTriggeredForSession, setJumpscareTriggeredForSession] = useState(false);
 
     const handleScroll = useCallback(() => {
         const textarea = textareaRef.current;
@@ -54,7 +54,7 @@ export function MyTextEditorApp({ app }: WindowProps) {
                 console.log("MyTextEditorApp: Scrolled to bottom! Initiating Jumpscare sequence.");
                 setJumpscareTriggeredForSession(true);
                 setIsOSShaking(true);
-                setJumpscareScheduled(true); // Now we just set this state
+                setJumpscareScheduled(true); // This triggers the jumpscare in App.tsx
             }
         }
     }, [jumpscareTriggeredForSession, jumpscareScheduled, setJumpscareScheduled, setIsOSShaking]);

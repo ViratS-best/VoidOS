@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useRef, useCallback } from 'react';
 
-interface OSShakeContextType {
+export interface OSShakeContextType {
     isOSShaking: boolean;
     setIsOSShaking: (shake: boolean) => void;
     jumpscareScheduled: boolean;
@@ -14,6 +14,7 @@ interface OSShakeContextType {
     isChallengeActive: boolean;
     setIsChallengeActive: (active: boolean) => void;
     completeChallenge: (success: boolean) => void;
+    triggerJumpscare: () => void; // ADD THIS
 }
 
 export const OSShakeContext = createContext<OSShakeContextType | undefined>(undefined);
@@ -101,6 +102,10 @@ export const OSShakeProvider: React.FC<OSShakeProviderProps> = ({ children }) =>
         resetGameSession();
     }, [setShowWinScreen, setWinScreenMessage, setIsOSShaking, setIsChallengeActive, setJumpscareScheduled, resetGameSession]);
 
+    // ADD THIS FUNCTION
+    const triggerJumpscare = useCallback(() => {
+        setJumpscareScheduled(true);
+    }, []);
 
     const contextValue = {
         isOSShaking, setIsOSShaking,
@@ -110,6 +115,7 @@ export const OSShakeProvider: React.FC<OSShakeProviderProps> = ({ children }) =>
         challengeCount, setChallengeCount,
         isChallengeActive, setIsChallengeActive,
         completeChallenge,
+        triggerJumpscare, // ADD THIS
     };
 
     return (

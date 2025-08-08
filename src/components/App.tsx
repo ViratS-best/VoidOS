@@ -19,6 +19,7 @@ const JUMPSCARE_AUDIO = "/audio/scream_jumpscare.mp3";
 const GHOSTLY_IMAGE_URL = "/images/ghostly_face.png";
 const CHALLENGE_TRIGGER_DELAY_MS = 20000;
 const CHALLENGES_BEFORE_BOSS = 5;
+const WIN_AUDIO = "/audio/victory.mp3";
 
 // This component is the entry point of your application
 const AppContent = () => {
@@ -41,6 +42,7 @@ const AppContent = () => {
 
     const ambientAudioRef = useRef<HTMLAudioElement>(null);
     const jumpscareAudioRef = useRef<HTMLAudioElement>(null);
+    const winAudioRef = useRef<HTMLAudioElement>(null);
 
     const {
         isOSShaking,
@@ -169,9 +171,10 @@ const AppContent = () => {
         setChallengeDisplayKey(0);
 
         if (ambientAudioRef.current) {
-            ambientAudioRef.current.volume = 0;
-            ambientAudioRef.current.play().catch(e => console.error("Ambient audio priming failed:", e));
-            ambientAudioRef.current.pause();
+            ambientAudioRef.current.currentTime = 0;
+            ambientAudioRef.current.loop = true;
+            ambientAudioRef.current.volume = 0.5;
+            ambientAudioRef.current.play().catch(e => console.error("Ambient audio play failed:", e));
         }
         if (jumpscareAudioRef.current) {
             jumpscareAudioRef.current.volume = 0;
@@ -181,6 +184,24 @@ const AppContent = () => {
 
         scheduleNextGameEvent();
     }, [resetGameSession, scheduleNextGameEvent]);
+
+    // To play unsettling audio at random times, you could do something like:
+    useEffect(() => {
+        if (isOSActive && ambientAudioRef.current) {
+            const randomPlay = () => {
+                if (ambientAudioRef.current) {
+                    ambientAudioRef.current.currentTime = 0;
+                    ambientAudioRef.current.play();
+                }
+            };
+            const interval = setInterval(() => {
+                if (Math.random() < 0.2) { // 20% chance every 30s
+                    randomPlay();
+                }
+            }, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [isOSActive]);
 
     useEffect(() => {
         if (!isChallengeActive && !jumpscareScheduled && !showWinScreen && isOSActive) {
@@ -295,10 +316,20 @@ const AppContent = () => {
         }
     }, [showWinScreen, clearAllHorrorTimersAndResetStates]);
 
+    useEffect(() => {
+        if (showWinScreen && winAudioRef.current) {
+            winAudioRef.current.currentTime = 0;
+            winAudioRef.current.play();
+        }
+    }, [showWinScreen]);
+
     return (
         <div className={`${styles.appContainer} ${isOSShaking ? styles.osShakeActive : ''}`}>
+            <audio ref={winAudioRef} src={WIN_AUDIO} preload="auto" />
             {showWarningScreen ? (
                 <WarningScreen onStart={handleStartOS} />
+            ) : showWinScreen ? (
+                <WinScreen />
             ) : (
                 <>
                     <ProzillaOS
@@ -352,10 +383,6 @@ const AppContent = () => {
                                 className={styles.jumpscareImage}
                             />
                         </div>
-                    )}
-
-                    {showWinScreen && (
-                        <WinScreen />
                     )}
                 </>
             )}
