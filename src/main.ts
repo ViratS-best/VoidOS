@@ -1,6 +1,6 @@
-// src/main.ts (or src/apps/myTerminal.ts)
+// src/main.ts
 import { App } from "prozilla-os";
-import { MyTerminalApp } from "./components/MyTerminalApp"; // Adjust path if you put it in apps folder
+import { MyTerminalApp } from "./components/MyTerminalApp";
 
 /**
  * Change this to the name of your application
@@ -16,8 +16,7 @@ const id = "my-custom-terminal"; // A unique ID for your new terminal
 
 const myTerminalApp = new App(name, id, MyTerminalApp)
 	.setDescription("Your personalized terminal for VoidOS.")
- 	// You'll need an icon. For now, you can use a placeholder or find a terminal icon SVG
- 	// Example: .setIconUrl("https://raw.githubusercontent.com/prozilla-os/ProzillaOS/main/public/assets/icons/terminal.svg");
-    .setIconUrl("public/terminal.png"); // Using ProzillaOS's default terminal icon for convenience
+    // Use BASE_URL for correct path on GitHub Pages
+    .setIconUrl(`${import.meta.env.BASE_URL}terminal.png`);
 
 export { myTerminalApp };
